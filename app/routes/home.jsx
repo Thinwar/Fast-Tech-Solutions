@@ -8,5 +8,17 @@ export function meta() {
 }
 
 export default function Home() {
-  return <Welcome />;
+  return (
+    <main>
+      <div className="p-10 bg-shop-light-pink">
+        <h2 className="text-xl font-semibold">Home</h2>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sit, quam!
+          Tempore exercitationem natus doloremque nulla eos, dolore vel?
+          Veritatis debitis minima unde soluta adipisci excepturi rerum alias
+          velit recusandae saepe.
+        </p>
+      </div>
+    </main>
+  );
 }
