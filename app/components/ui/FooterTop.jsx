@@ -25,16 +25,16 @@ export default function FooterTop() {
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 border-b">
+    <div className="grid grid-cols-1 gap-px border-b border-white/10 bg-white/10 md:grid-cols-2 lg:grid-cols-4">
       {items?.map((item, index) => (
         <div
           key={index}
-          className="flex items-center gap-3 group hover:bg-indigo-50 p-4 transition-colors cursor-pointer"
+          className="flex items-center gap-3 bg-slate-950 p-5 transition-colors hover:bg-slate-900"
         >
-          {item.icon}
+          <div className="text-indigo-400">{item.icon}</div>
           <div>
-            <h3>{item.title}</h3>
-            <p>{item.desc}</p>
+            <h3 className="font-semibold text-white">{item.title}</h3>
+            <p className="text-sm text-slate-400">{item.desc}</p>
           </div>
         </div>
       ))}

@@ -1,81 +1,103 @@
-import Container from "./container";
-import FooterTop from "./FooterTop";
+import { ArrowRight, ShieldCheck, Truck } from "lucide-react";
+import { Link } from "react-router";
+import { useCatalogData } from "~/hooks/useCatalogData";
+import Container from "./Container";
 import Logo from "./Logo";
-import { Facebook, Twitter, Instagram } from "lucide-react";
+import SocialMedia from "./SocialMedia.jsx";
 
 export default function Footer() {
+  const { catalogData } = useCatalogData();
+  const { store, categories } = catalogData;
+
   return (
-    <footer className="bg-indigo-600 text-white mt-10">
-      {/* Top Features */}
-      <FooterTop />
-
-      <Container>
-        {/* Main Footer */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 py-10">
-          {/* Logo + About */}
-          <div className="space-y-4">
-            <Logo />
-            <p className="text-sm text-gray-200">
-              Your one-stop shop for the latest tech in Kenya. Phones, laptops,
-              accessories & more.
-            </p>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h3 className="font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2 text-sm text-gray-200">
-              <li className="hover:text-white cursor-pointer">Home</li>
-              <li className="hover:text-white cursor-pointer">Shop</li>
-              <li className="hover:text-white cursor-pointer">Guides</li>
-              <li className="hover:text-white cursor-pointer">Deals</li>
-            </ul>
-          </div>
-
-          {/* Categories */}
-          <div>
-            <h3 className="font-semibold mb-4">Categories</h3>
-            <ul className="space-y-2 text-sm text-gray-200">
-              <li className="hover:text-white cursor-pointer">Smartphones</li>
-              <li className="hover:text-white cursor-pointer">Laptops</li>
-              <li className="hover:text-white cursor-pointer">Accessories</li>
-              <li className="hover:text-white cursor-pointer">Headphones</li>
-            </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div>
-            <h3 className="font-semibold mb-4">Stay Updated</h3>
-            <p className="text-sm text-gray-200 mb-3">
-              Get the latest deals & tech news
-            </p>
-
-            <div className="flex">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="w-full px-3 py-2 rounded-l-lg text-black outline-none"
-              />
-              <button className="bg-black px-4 rounded-r-lg hover:bg-gray-800 transition">
-                Join
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Bar */}
-        <div className="border-t border-white/10 py-5 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-200">
-          <p>
-            © {new Date().getFullYear()} Fast Tech Solutions. All rights
-            reserved.
+    <footer className="mt-24 border-t border-slate-200 bg-slate-950 text-slate-200">
+      <Container className="grid gap-8 border-b border-white/10 py-10 md:grid-cols-3">
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+          <Truck className="text-indigo-400" />
+          <h3 className="mt-4 text-lg font-semibold text-white">Fast delivery</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Same-day delivery across select Nairobi zones and smooth nationwide dispatch.
           </p>
+        </div>
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+          <ShieldCheck className="text-indigo-400" />
+          <h3 className="mt-4 text-lg font-semibold text-white">Warranty support</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Premium after-sales support for setup, warranty questions, and product guidance.
+          </p>
+        </div>
+        <div className="rounded-[28px] border border-white/10 bg-gradient-to-br from-indigo-600 to-indigo-800 p-6 text-white">
+          <p className="text-sm font-medium uppercase tracking-[0.24em] text-indigo-100">
+            Need recommendations?
+          </p>
+          <h3 className="mt-4 text-2xl font-semibold">Talk to our team before you buy.</h3>
+          <a
+            href={`mailto:${store.supportEmail}`}
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-indigo-700"
+          >
+            Contact support
+            <ArrowRight size={16} />
+          </a>
+        </div>
+      </Container>
 
-          <div className="flex gap-4">
-            <Facebook className="cursor-pointer hover:text-white transition" size={20} />
-            <Twitter className="cursor-pointer hover:text-white transition" size={20} />
-            <Instagram className="cursor-pointer hover:text-white transition" size={20} />
+      <Container className="grid gap-10 py-12 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
+        <div className="space-y-5">
+          <Logo textClassName="text-white" />
+          <p className="max-w-md text-sm leading-7 text-slate-400">
+            A premium ecommerce front built for discovery, comparison, and confident device buying.
+          </p>
+          <div className="space-y-2 text-sm text-slate-400">
+            <p>{store.location}</p>
+            <p>{store.supportPhone}</p>
+            <p>{store.supportEmail}</p>
+          </div>
+          <SocialMedia />
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-white">
+            Explore
+          </h3>
+          <div className="mt-4 space-y-3 text-sm text-slate-400">
+            <Link to="/shop" className="block transition hover:text-white">
+              Shop all products
+            </Link>
+            <Link to="/guides" className="block transition hover:text-white">
+              Buying guides
+            </Link>
+            <Link to="/deals" className="block transition hover:text-white">
+              Latest deals
+            </Link>
+            <Link to="/cart" className="block transition hover:text-white">
+              Cart
+            </Link>
+            <Link to="/admin" className="block transition hover:text-white">
+              Admin panel
+            </Link>
           </div>
         </div>
+
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-[0.24em] text-white">
+            Categories
+          </h3>
+          <div className="mt-4 space-y-3 text-sm text-slate-400">
+            {categories.map((category) => (
+              <Link
+                key={category.slug}
+                to={`/shop?category=${category.slug}`}
+                className="block transition hover:text-white"
+              >
+                {category.title}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </Container>
+
+      <Container className="border-t border-white/10 py-5 text-xs text-slate-500">
+        Premium tech shopping with an indigo-first experience.
       </Container>
     </footer>
   );

@@ -1,30 +1,28 @@
-// Assuming you're using shadcn/cn utility
 import { Link } from "react-router";
 import { cn } from "~/lib/utils";
+import { useCatalogData } from "~/hooks/useCatalogData";
 
-export default function Logo() {
+export default function Logo({ className = "", textClassName = "" }) {
+  const { catalogData } = useCatalogData();
+
   return (
-    <Link href="/" className="flex items-center gap-2 group ">
-      {/* 1. Set a fixed height for the logo image to keep the header slim.
-          2. 'object-contain' ensures the logo doesn't stretch.
-      */}
-      <img
-        src="logo.jpg"
-        alt="Fast Tech Solutions Logo"
-        className="w-10 h-10 object-contain rounded-md"
-      />
-
-      {/* 1. Removed mt-4 to align text horizontally with the image.
-          2. Added font-bold and tracking-tight for a "premium tech" feel.
-          3. Added a hover effect (group-hover) to make it feel interactive.
-      */}
-      <h2
-        className={cn(
-          "text-xl font-bold tracking-tight text-slate-900 dark:text-white transition-colors group-hover:text-indigo-600 cursor-pointer",
-        )}
-      >
-        Fast <span className="text-indigo-600">Tech</span> Solutions
-      </h2>
+    <Link to="/" className={cn("group flex items-center gap-3", className)}>
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-800 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30">
+        FT
+      </div>
+      <div className="min-w-0">
+        <p
+          className={cn(
+            "truncate text-base font-semibold tracking-tight text-slate-950 transition group-hover:text-indigo-700",
+            textClassName,
+          )}
+        >
+          {catalogData.store.name}
+        </p>
+        <p className="text-xs uppercase tracking-[0.28em] text-slate-400">
+          {catalogData.store.tagline}
+        </p>
+      </div>
     </Link>
   );
 }

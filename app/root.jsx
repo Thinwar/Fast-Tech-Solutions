@@ -14,6 +14,7 @@ import { clerkMiddleware, rootAuthLoader } from "@clerk/react-router/server";
 import stylesheet from "./app.css?url";
 import Header from "./components/ui/Header";
 import Footer from "./components/ui/Footer";
+import MobileBottomNav from "./components/store/MobileBottomNav";
 
 // Middleware
 export const middleware = [clerkMiddleware()];
@@ -31,7 +32,7 @@ export const links = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap",
   },
   { rel: "stylesheet", href: stylesheet },
 ];
@@ -49,12 +50,13 @@ export function Layout({ children }) {
         <Links />
       </head>
 
-      <body className="font-popins antialiased bg-gray-50 text-gray-800">
+      <body className="font-sans antialiased bg-[#f8fafc] text-gray-800">
         <ClerkProvider loaderData={loaderData}>
-          <div className="flex flex-col min-h-screen">
+          <div className="flex min-h-screen flex-col">
             <Header />
-            <main>{children}</main>
+            <main className="flex-1 pb-24 md:pb-0">{children}</main>
             <Footer />
+            <MobileBottomNav />
           </div>
         </ClerkProvider>
         <ScrollRestoration />

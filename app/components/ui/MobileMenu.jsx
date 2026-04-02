@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import SideMenu from "./SideMenu";
 
@@ -7,7 +7,6 @@ export default function MobileMenu() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
 
-  // Close menu on route change
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
@@ -15,12 +14,12 @@ export default function MobileMenu() {
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="md:hidden text-gray-700 hover:text-indigo-600"
+        className="inline-flex rounded-full border border-slate-200 p-3 text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
       >
-        <Menu size={24} />
+        <Menu size={18} />
       </button>
-
       <SideMenu open={open} setOpen={setOpen} />
     </>
   );
