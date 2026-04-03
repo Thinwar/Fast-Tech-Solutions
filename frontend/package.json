@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "build": "react-router build && copy public\\_redirects build\\client\\_redirects"
+    "build": "react-router build && node -e \"const fs=require('fs'); fs.mkdirSync('build/client',{recursive:true}); fs.copyFileSync('public/_redirects','build/client/_redirects');\""
   },
   "dependencies": {
     "@clerk/react-router": "^3.0.7",
