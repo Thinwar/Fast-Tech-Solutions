@@ -5,7 +5,6 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useLoaderData,
 } from "react-router";
 
 import { ClerkProvider } from "@clerk/react-router";
@@ -16,13 +15,10 @@ import Header from "./components/ui/Header";
 import Footer from "./components/ui/Footer";
 import MobileBottomNav from "./components/store/MobileBottomNav";
 
-// Middleware
 export const middleware = [clerkMiddleware()];
 
-// Loader
 export const loader = (args) => rootAuthLoader(args);
 
-// Links
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -37,10 +33,7 @@ export const links = () => [
   { rel: "stylesheet", href: stylesheet },
 ];
 
-// 🔥 Layout (HTML shell + Page)
 export function Layout({ children }) {
-  const loaderData = useLoaderData();
-
   return (
     <html lang="en">
       <head>
@@ -49,16 +42,8 @@ export function Layout({ children }) {
         <Meta />
         <Links />
       </head>
-
       <body className="font-sans antialiased bg-[#f8fafc] text-gray-800">
-        <ClerkProvider loaderData={loaderData}>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1 pb-24 md:pb-0">{children}</main>
-            <Footer />
-            <MobileBottomNav />
-          </div>
-        </ClerkProvider>
+        {children}
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -66,12 +51,21 @@ export function Layout({ children }) {
   );
 }
 
-// 🔥 App
-export default function App() {
-  return <Outlet />;
+export default function App({ loaderData }) {
+  return (
+    <ClerkProvider loaderData={loaderData}>
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-1 pb-24 md:pb-0">
+          <Outlet />
+        </main>
+        <Footer />
+        <MobileBottomNav />
+      </div>
+    </ClerkProvider>
+  );
 }
 
-// Error Boundary
 export function ErrorBoundary({ error }) {
   let message = "Oops!";
   let details = "An unexpected error occurred.";
@@ -89,15 +83,15 @@ export function ErrorBoundary({ error }) {
   }
 
   return (
-    <main className="pt-16 p-6 container mx-auto">
+    <main className="container mx-auto p-6 pt-16">
       <h1 className="text-3xl font-bold text-indigo-600">{message}</h1>
-      <p className="text-gray-600 mt-2">{details}</p>
+      <p className="mt-2 text-gray-600">{details}</p>
 
-      {stack && (
-        <pre className="w-full p-4 mt-4 overflow-x-auto bg-gray-100 rounded-lg">
+      {stack ? (
+        <pre className="mt-4 w-full overflow-x-auto rounded-lg bg-gray-100 p-4">
           <code>{stack}</code>
         </pre>
-      )}
+      ) : null}
     </main>
   );
 }
