@@ -49,20 +49,24 @@ export function Layout({ children }) {
 }
 
 export default function App() {
+  const appShell = (
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1 pb-24 md:pb-0">
+        <Outlet />
+      </main>
+      <Footer />
+      <MobileBottomNav />
+    </div>
+  );
+
   if (!clerkPublishableKey) {
-    throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY.");
+    return appShell;
   }
 
   return (
     <ClerkProvider publishableKey={clerkPublishableKey}>
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1 pb-24 md:pb-0">
-          <Outlet />
-        </main>
-        <Footer />
-        <MobileBottomNav />
-      </div>
+      {appShell}
     </ClerkProvider>
   );
 }
