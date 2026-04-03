@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
+    "start": "node scripts/serve-static.mjs",
     "build": "react-router build && node -e \"const fs=require('fs'); fs.mkdirSync('build/client',{recursive:true}); fs.copyFileSync('public/_redirects','build/client/_redirects');\""
   },
   "dependencies": {

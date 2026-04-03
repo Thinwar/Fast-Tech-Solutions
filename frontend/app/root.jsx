@@ -8,16 +8,11 @@ import {
 } from "react-router";
 
 import { ClerkProvider } from "@clerk/react-router";
-import { clerkMiddleware, rootAuthLoader } from "@clerk/react-router/server";
 
 import stylesheet from "./app.css?url";
 import Header from "./components/ui/Header";
 import Footer from "./components/ui/Footer";
 import MobileBottomNav from "./components/store/MobileBottomNav";
-
-export const middleware = [clerkMiddleware()];
-
-export const loader = (args) => rootAuthLoader(args);
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -32,6 +27,8 @@ export const links = () => [
   },
   { rel: "stylesheet", href: stylesheet },
 ];
+
+const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 export function Layout({ children }) {
   return (
@@ -51,9 +48,13 @@ export function Layout({ children }) {
   );
 }
 
-export default function App({ loaderData }) {
+export default function App() {
+  if (!clerkPublishableKey) {
+    throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY.");
+  }
+
   return (
-    <ClerkProvider loaderData={loaderData}>
+    <ClerkProvider publishableKey={clerkPublishableKey}>
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="flex-1 pb-24 md:pb-0">
