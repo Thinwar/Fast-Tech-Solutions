@@ -97,7 +97,7 @@ export default function SearchBar({ compact = false }) {
                         <div>
                           <p className="font-medium text-slate-900">{item.name}</p>
                           <p className="mt-1 text-sm text-slate-500">
-                            {item.brand} · {item.category}
+                            {`${item.brand} - ${item.category}`}
                           </p>
                         </div>
                         <span className="text-sm font-medium text-indigo-700">View</span>

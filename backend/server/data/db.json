@@ -1,6 +1,140 @@
 {
-  "users": [],
-  "sessions": [],
-  "products": [],
-  "orders": []
+  "users": [
+    {
+      "id": "admin-1",
+      "name": "Admin User",
+      "email": "admin@fasttechsolutions.co.ke",
+      "passwordHash": "c489471bedd8b40835357cad7b680a37:d43eeb68eda46b60a174ef237f9590adc96f811fc32573aa8080f4daa2046c2deeb8296620841a26f2e7713cddcaee821c98ed629a6dc0c2ff8382dd86568a4c",
+      "role": "admin",
+      "createdAt": "2026-04-05T08:14:13.640Z"
+    },
+    {
+      "id": "customer-1",
+      "name": "Demo Customer",
+      "email": "customer@example.com",
+      "passwordHash": "288ea34e22e265ef3f65dce2bb755647:7d6945c53fb35e65e5c521358ff70a4ab893be9e21cac44c3db2a157d76812e490e1cca20c80e6f3a3b9f4ac89d1d9c60b6139456b977219b3e1ca0454d0b937",
+      "role": "customer",
+      "createdAt": "2026-04-05T08:14:13.723Z"
+    },
+    {
+      "id": "user-bbe2e66f8708",
+      "name": "Test User",
+      "email": "test@example.com",
+      "passwordHash": "5297b387af069e7875aff3edf709130f:6ac7e1718e6389d9623fb484b15567c382bac7fba76ba80de0e6dc98f5c3a42efec020fd78e27d2b2ab173c39fdf419a64a018cae5cdeb8a2a78567b90bdd3e8",
+      "role": "customer",
+      "createdAt": "2026-04-05T08:14:15.161Z"
+    }
+  ],
+  "sessions": [
+    {
+      "token": "4a35aa38f7d08f03ae1737d0f4945ea566a33fbbba60fbe45ef98ec7fa734984",
+      "userId": "user-bbe2e66f8708",
+      "createdAt": "2026-04-05T08:14:15.162Z"
+    },
+    {
+      "token": "39d52d1504644845cbba1caf9247aa297de3d1bfd68a2c35b8ef68cce450ba3d",
+      "userId": "user-bbe2e66f8708",
+      "createdAt": "2026-04-05T08:14:15.329Z"
+    },
+    {
+      "token": "8f6d9de73cd51a4440e45cf6ddd66c579c60b251b620dd26cf054ff17430bd6b",
+      "userId": "user-bbe2e66f8708",
+      "createdAt": "2026-04-05T08:16:08.507Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-iphone-16-pro-max",
+      "name": "iPhone 16 Pro Max",
+      "slug": "iphone-16-pro-max",
+      "brand": "Apple",
+      "category": "phones",
+      "price": 189999,
+      "originalPrice": 204999,
+      "stock": 12,
+      "status": "active",
+      "description": "Titanium flagship with pro camera controls and a brighter edge-to-edge display.",
+      "specs": [
+        "6.9-inch Super Retina display",
+        "A18 Pro performance chip",
+        "5x optical zoom system",
+        "256GB storage"
+      ],
+      "image": "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=900&q=80",
+      "createdAt": "2026-04-05T08:14:13.723Z",
+      "updatedAt": "2026-04-05T08:14:13.723Z"
+    },
+    {
+      "id": "prod-galaxy-s24-ultra",
+      "name": "Samsung Galaxy S24 Ultra",
+      "slug": "samsung-galaxy-s24-ultra",
+      "brand": "Samsung",
+      "category": "phones",
+      "price": 174999,
+      "originalPrice": 189999,
+      "stock": 8,
+      "status": "active",
+      "description": "Large premium display, S Pen productivity, and sharp low-light photography.",
+      "specs": [
+        "6.8-inch QHD+ AMOLED",
+        "Snapdragon flagship platform",
+        "200MP pro-grade camera",
+        "5000mAh battery"
+      ],
+      "image": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=900&q=80",
+      "createdAt": "2026-04-05T08:14:13.723Z",
+      "updatedAt": "2026-04-05T08:14:13.723Z"
+    },
+    {
+      "id": "prod-macbook-air-m3",
+      "name": "MacBook Air M3",
+      "slug": "macbook-air-m3",
+      "brand": "Apple",
+      "category": "laptops",
+      "price": 164999,
+      "originalPrice": 179999,
+      "stock": 6,
+      "status": "active",
+      "description": "Ultra-light premium laptop for study, travel, and focused creative work.",
+      "specs": [
+        "13-inch Liquid Retina display",
+        "Apple M3 chip",
+        "16GB unified memory",
+        "512GB SSD storage"
+      ],
+      "image": "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?auto=format&fit=crop&w=900&q=80",
+      "createdAt": "2026-04-05T08:14:13.723Z",
+      "updatedAt": "2026-04-05T08:14:13.723Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": "order-9ef148fd43bf",
+      "userId": "user-bbe2e66f8708",
+      "items": [
+        {
+          "productId": "prod-iphone-16-pro-max",
+          "name": "iPhone 16 Pro Max",
+          "price": 189999,
+          "quantity": 1,
+          "lineTotal": 189999
+        },
+        {
+          "productId": "prod-macbook-air-m3",
+          "name": "MacBook Air M3",
+          "price": 164999,
+          "quantity": 1,
+          "lineTotal": 164999
+        }
+      ],
+      "subtotal": 354998,
+      "shippingFee": 0,
+      "total": 354998,
+      "shippingAddress": {},
+      "paymentMethod": "cash_on_delivery",
+      "status": "pending",
+      "createdAt": "2026-04-05T08:16:08.592Z",
+      "updatedAt": "2026-04-05T08:16:08.592Z"
+    }
+  ]
 }

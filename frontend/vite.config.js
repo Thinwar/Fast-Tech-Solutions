@@ -6,12 +6,18 @@ import tailwindcss from "@tailwindcss/vite";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, "..");
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter()],
   resolve: {
     alias: {
       "~": path.resolve(__dirname, "./app"), // Maps ~ to the /app directory
+    },
+  },
+  server: {
+    fs: {
+      allow: [projectRoot],
     },
   },
 });

@@ -4,6 +4,7 @@ import ProductCard from "~/components/store/ProductCard";
 import ProductGallery from "~/components/store/ProductGallery";
 import SectionHeading from "~/components/store/SectionHeading";
 import Container from "~/components/ui/Container";
+import { useCartData } from "~/hooks/useCartData";
 import {
   formatPrice,
   getProductBySlug,
@@ -21,6 +22,7 @@ export function meta() {
 export default function ProductDetailsPage() {
   const { slug } = useParams();
   const { catalogData } = useCatalogData();
+  const { addToCart } = useCartData();
   const product = getProductBySlug(catalogData, slug);
   const relatedProducts = getRelatedProducts(catalogData, slug);
   const { store } = catalogData;
@@ -45,15 +47,15 @@ export default function ProductDetailsPage() {
   }
 
   return (
-    <Container className="py-10 md:py-14">
-      <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+    <Container className="py-8 sm:py-10 md:py-14">
+      <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
         <ProductGallery product={product} />
 
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:rounded-[28px] sm:p-6 md:rounded-[32px] md:p-8">
           <p className="text-sm font-medium uppercase tracking-[0.24em] text-indigo-600">
             {product.brand}
           </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl md:text-4xl">
             {product.name}
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
@@ -68,7 +70,7 @@ export default function ProductDetailsPage() {
           </div>
 
           <div className="mt-8">
-            <p className="text-3xl font-semibold text-slate-950">
+            <p className="text-2xl font-semibold text-slate-950 sm:text-3xl">
               {formatPrice(product.price)}
             </p>
             <p className="mt-1 text-sm text-slate-400 line-through">
@@ -76,9 +78,11 @@ export default function ProductDetailsPage() {
             </p>
           </div>
 
-          <p className="mt-8 text-base leading-8 text-slate-600">{product.description}</p>
+          <p className="mt-8 text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+            {product.description}
+          </p>
 
-          <div className="mt-8 rounded-[28px] bg-slate-50 p-5">
+          <div className="mt-8 rounded-[22px] bg-slate-50 p-4 sm:rounded-[28px] sm:p-5">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
               Key specs
             </p>
@@ -92,7 +96,11 @@ export default function ProductDetailsPage() {
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
+            <button
+              type="button"
+              onClick={() => addToCart(product.slug)}
+              className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            >
               Add to cart
             </button>
             <a
@@ -111,7 +119,7 @@ export default function ProductDetailsPage() {
             </Link>
           </div>
 
-          <div className="mt-8 space-y-4 rounded-[28px] border border-slate-200 p-5 text-sm text-slate-600">
+          <div className="mt-8 space-y-4 rounded-[22px] border border-slate-200 p-4 text-sm text-slate-600 sm:rounded-[28px] sm:p-5">
             <div className="flex items-start gap-3">
               <Truck size={18} className="mt-0.5 text-indigo-600" />
               <div>
@@ -133,13 +141,13 @@ export default function ProductDetailsPage() {
         </div>
       </div>
 
-      <div className="mt-16">
+      <div className="mt-12 sm:mt-16">
         <SectionHeading
           eyebrow="Related"
           title="You may also like"
           description="More products chosen to feel consistent with the premium category and brand direction."
         />
-        <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {relatedProducts.map((item) => (
             <ProductCard key={item.slug} product={item} />
           ))}

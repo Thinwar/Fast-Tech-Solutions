@@ -1,12 +1,52 @@
-import { CreditCard, ShieldCheck, Truck } from "lucide-react";
+import {
+  CreditCard,
+  Minus,
+  Plus,
+  ShieldCheck,
+  ShoppingBag,
+  Trash2,
+  Truck,
+} from "lucide-react";
+import { Link } from "react-router";
 import Container from "~/components/ui/Container";
-import { formatPrice, getFeaturedProducts } from "~/data/catalog";
+import { formatPrice, getProductBySlug } from "~/data/catalog";
+import { useCartData } from "~/hooks/useCartData";
 import { useCatalogData } from "~/hooks/useCatalogData";
 
 export default function CartPage() {
   const { catalogData } = useCatalogData();
-  const items = getFeaturedProducts(catalogData).slice(0, 2);
-  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+  const { cartItems, updateQuantity, removeFromCart, clearCart } = useCartData();
+
+  const items = cartItems
+    .map((item) => {
+      const product = getProductBySlug(catalogData, item.slug);
+      return product ? { ...product, quantity: item.quantity } : null;
+    })
+    .filter(Boolean);
+
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  if (!items.length) {
+    return (
+      <Container className="py-10 md:py-14">
+        <div className="rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm md:p-12">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+            <ShoppingBag size={28} />
+          </div>
+          <h1 className="mt-6 text-3xl font-semibold text-slate-950">Your cart is empty</h1>
+          <p className="mx-auto mt-3 max-w-xl text-slate-600">
+            Start with a product you love, then come back here to review quantities and checkout details.
+          </p>
+          <Link
+            to="/shop"
+            className="mt-6 inline-flex rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
+          >
+            Continue shopping
+          </Link>
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <Container className="py-10 md:py-14">
@@ -20,13 +60,51 @@ export default function CartPage() {
             {items.map((item) => (
               <div
                 key={item.slug}
-                className="flex items-center justify-between rounded-[24px] border border-slate-200 p-4"
+                className="flex flex-col gap-4 rounded-[24px] border border-slate-200 p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div>
                   <p className="text-lg font-semibold text-slate-950">{item.name}</p>
-                  <p className="mt-1 text-sm text-slate-500">{item.brand}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {item.brand} · {item.stock}
+                  </p>
                 </div>
-                <p className="text-lg font-semibold text-slate-950">{formatPrice(item.price)}</p>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center rounded-full border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.slug, item.quantity - 1)}
+                      className="px-3 py-2 text-slate-600 transition hover:text-indigo-700"
+                      aria-label={`Decrease quantity for ${item.name}`}
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <span className="min-w-10 text-center text-sm font-semibold text-slate-900">
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.slug, item.quantity + 1)}
+                      className="px-3 py-2 text-slate-600 transition hover:text-indigo-700"
+                      aria-label={`Increase quantity for ${item.name}`}
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+
+                  <p className="text-lg font-semibold text-slate-950">
+                    {formatPrice(item.price * item.quantity)}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => removeFromCart(item.slug)}
+                    className="inline-flex items-center gap-2 rounded-full border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                  >
+                    <Trash2 size={16} />
+                    Remove
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -52,6 +130,13 @@ export default function CartPage() {
             <button className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
               <CreditCard size={18} />
               Proceed to checkout
+            </button>
+            <button
+              type="button"
+              onClick={clearCart}
+              className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700"
+            >
+              Clear cart
             </button>
           </div>
 

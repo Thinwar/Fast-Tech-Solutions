@@ -44,16 +44,16 @@ export default function Home() {
     <div className="bg-white">
       <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-br from-indigo-700 via-indigo-600 to-slate-950 text-white">
         <div className="absolute left-1/2 top-0 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
-        <Container className="relative grid gap-12 py-16 md:py-24 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+        <Container className="relative grid gap-10 py-12 sm:py-14 md:py-20 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.28em] text-indigo-100">
               <Sparkles size={14} />
               New premium storefront
             </div>
-            <h1 className="font-display text-balanced mt-8 text-5xl font-semibold leading-[0.94] md:text-6xl lg:text-7xl">
+            <h1 className="font-display text-balanced mt-6 text-4xl font-semibold leading-[0.96] sm:text-5xl md:mt-8 md:text-6xl lg:text-7xl">
               Tech that feels premium before it even ships.
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-indigo-50/88">
+            <p className="mt-5 max-w-xl text-base leading-7 text-indigo-50/88 sm:text-lg sm:leading-8">
               Discover flagship phones, clean laptop setups, and accessory upgrades in an indigo-first shopping experience inspired by modern device stores.
             </p>
             <div className="mt-6 flex flex-wrap gap-3 text-sm text-indigo-50/85">
@@ -67,7 +67,7 @@ export default function Home() {
                 Official warranty support
               </span>
             </div>
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+            <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:gap-4">
               <Link
                 to="/shop"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50"
@@ -84,18 +84,18 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
             {featuredProducts.slice(0, 4).map((product, index) => (
               <div
                 key={product.slug}
-                className={`rounded-[32px] border border-white/10 bg-white/10 p-5 backdrop-blur ${
+                className={`rounded-[28px] border border-white/10 bg-white/10 p-4 backdrop-blur sm:rounded-[32px] sm:p-5 ${
                   index === 0 ? "sm:col-span-2" : ""
                 }`}
               >
                 <p className="text-xs uppercase tracking-[0.24em] text-indigo-100">
                   {product.brand}
                 </p>
-                <h2 className="font-display mt-3 text-2xl font-semibold leading-tight">
+                <h2 className="font-display mt-3 text-xl font-semibold leading-tight sm:text-2xl">
                   {product.name}
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-indigo-50/80">{product.summary}</p>
@@ -105,7 +105,7 @@ export default function Home() {
         </Container>
       </section>
 
-      <Container className="py-16">
+      <Container className="py-12 sm:py-14 md:py-16">
         <SectionHeading
           eyebrow="Categories"
           title="Shop by category"
@@ -136,13 +136,13 @@ export default function Home() {
       </Container>
 
       <Container className="py-4">
-        <div className="rounded-[36px] border border-slate-200 bg-gradient-to-r from-white to-indigo-50 p-8">
+        <div className="rounded-[28px] border border-slate-200 bg-gradient-to-r from-white to-indigo-50 p-5 sm:rounded-[32px] sm:p-6 md:rounded-[36px] md:p-8">
           <SectionHeading
             eyebrow="Curated Picks"
             title="Shop by lifestyle, not just specs"
             description="A more memorable storefront starts by helping buyers see themselves in the product, not just compare numbers."
           />
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 md:grid-cols-3 md:gap-5">
             {[
               {
                 title: "Student picks",
@@ -159,9 +159,9 @@ export default function Home() {
             ].map((item) => (
               <div
                 key={item.title}
-                className="rounded-[28px] border border-white bg-white p-6 shadow-[0_18px_48px_-30px_rgba(15,23,42,0.2)]"
+                className="rounded-[24px] border border-white bg-white p-5 shadow-[0_18px_48px_-30px_rgba(15,23,42,0.2)] sm:rounded-[28px] sm:p-6"
               >
-                <h3 className="font-display text-2xl font-semibold leading-tight text-slate-950">
+                <h3 className="font-display text-xl font-semibold leading-tight text-slate-950 sm:text-2xl">
                   {item.title}
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-slate-600">{item.copy}</p>
@@ -171,7 +171,7 @@ export default function Home() {
         </div>
       </Container>
 
-      <Container className="py-8">
+      <Container className="py-8 sm:py-10">
         <SectionHeading
           eyebrow="Featured"
           title="Flagship picks with a softer, premium shopping flow"
@@ -186,7 +186,7 @@ export default function Home() {
             </Link>
           }
         />
-        <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 grid gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4">
           {isLoading
             ? Array.from({ length: 4 }).map((_, index) => <ProductSkeleton key={index} />)
             : featuredProducts.map((product) => (
@@ -195,18 +195,18 @@ export default function Home() {
         </div>
       </Container>
 
-      <Container className="py-16">
-        <div className="rounded-[36px] border border-slate-200 bg-slate-50 p-8 md:p-10">
+      <Container className="py-12 sm:py-14 md:py-16">
+        <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-5 sm:rounded-[32px] sm:p-7 md:rounded-[36px] md:p-10">
           <SectionHeading
             eyebrow="Brands"
             title="Trusted premium brands"
             description="A simple brand strip that feels curated instead of crowded."
           />
-          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-6">
             {brandSpotlight.map((brand) => (
               <div
                 key={brand}
-                className="flex h-20 items-center justify-center rounded-[24px] border border-white bg-white text-sm font-semibold tracking-[0.22em] text-slate-500 shadow-sm"
+                className="flex h-16 items-center justify-center rounded-[20px] border border-white bg-white px-3 text-center text-xs font-semibold tracking-[0.18em] text-slate-500 shadow-sm sm:h-20 sm:rounded-[24px] sm:text-sm sm:tracking-[0.22em]"
               >
                 {brand}
               </div>

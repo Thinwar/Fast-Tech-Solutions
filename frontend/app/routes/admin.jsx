@@ -376,7 +376,7 @@ export default function AdminPage() {
                 <div>
                   <p className="font-semibold text-slate-950">{product.name}</p>
                   <p className="mt-1 text-sm text-slate-500">
-                    {product.brand} · {product.category} · KSh {product.price}
+                    {`${product.brand} · ${product.category} · KSh ${product.price}`}
                   </p>
                   <p className="mt-2 text-sm text-slate-600">{product.summary}</p>
                 </div>

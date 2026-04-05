@@ -12,7 +12,6 @@ import { ClerkProvider } from "@clerk/react-router";
 import stylesheet from "./app.css?url";
 import Header from "./components/ui/Header";
 import Footer from "./components/ui/Footer";
-import MobileBottomNav from "./components/store/MobileBottomNav";
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -52,11 +51,10 @@ export default function App() {
   const appShell = (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1 pb-24 md:pb-0">
+      <main className="flex-1">
         <Outlet />
       </main>
       <Footer />
-      <MobileBottomNav />
     </div>
   );
 

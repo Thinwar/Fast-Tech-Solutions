@@ -24,38 +24,96 @@ function normalizeCatalogData(data) {
   };
 }
 
+let currentCatalogData = cloneDefaultCatalog();
+let hasHydratedCatalog = false;
+const listeners = new Set();
+
+function emitCatalogChange() {
+  listeners.forEach((listener) => listener(currentCatalogData));
+}
+
+function readStoredCatalog() {
+  if (typeof window === "undefined") {
+    return currentCatalogData;
+  }
+
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    return stored ? normalizeCatalogData(JSON.parse(stored)) : cloneDefaultCatalog();
+  } catch {
+    return cloneDefaultCatalog();
+  }
+}
+
+function ensureCatalogHydrated() {
+  if (!hasHydratedCatalog) {
+    currentCatalogData = readStoredCatalog();
+    hasHydratedCatalog = true;
+  }
+
+  return currentCatalogData;
+}
+
+function subscribe(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function writeCatalogData(nextValue) {
+  currentCatalogData = normalizeCatalogData(nextValue);
+  hasHydratedCatalog = true;
+
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(currentCatalogData));
+  }
+
+  emitCatalogChange();
+}
+
+function resetCatalogStore() {
+  currentCatalogData = cloneDefaultCatalog();
+  hasHydratedCatalog = true;
+
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(STORAGE_KEY);
+  }
+
+  emitCatalogChange();
+}
+
 export function useCatalogData() {
-  const [catalogData, setCatalogData] = useState(() => cloneDefaultCatalog());
-  const [hydrated, setHydrated] = useState(false);
+  const [catalogData, setCatalogDataState] = useState(() => ensureCatalogHydrated());
+  const [hydrated, setHydrated] = useState(hasHydratedCatalog);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setCatalogData(normalizeCatalogData(JSON.parse(stored)));
-      }
-    } catch {}
+    const nextValue = ensureCatalogHydrated();
+    setCatalogDataState(nextValue);
     setHydrated(true);
+
+    const unsubscribe = subscribe((value) => {
+      setCatalogDataState(value);
+      setHydrated(true);
+    });
+
+    const handleStorage = (event) => {
+      if (event.key && event.key !== STORAGE_KEY) return;
+      currentCatalogData = readStoredCatalog();
+      hasHydratedCatalog = true;
+      emitCatalogChange();
+    };
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   const updateCatalogData = (nextValue) => {
-    setCatalogData((current) => {
-      const resolvedValue =
-        typeof nextValue === "function" ? nextValue(current) : nextValue;
-      const normalizedValue = normalizeCatalogData(resolvedValue);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedValue));
-      }
-      return normalizedValue;
-    });
-  };
-
-  const resetCatalogData = () => {
-    const nextValue = cloneDefaultCatalog();
-    setCatalogData(nextValue);
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
+    const resolvedValue =
+      typeof nextValue === "function" ? nextValue(currentCatalogData) : nextValue;
+    writeCatalogData(resolvedValue);
   };
 
   return useMemo(
@@ -63,7 +121,7 @@ export function useCatalogData() {
       catalogData,
       hydrated,
       setCatalogData: updateCatalogData,
-      resetCatalogData,
+      resetCatalogData: resetCatalogStore,
     }),
     [catalogData, hydrated],
   );

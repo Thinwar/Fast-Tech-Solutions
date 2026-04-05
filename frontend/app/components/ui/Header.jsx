@@ -8,6 +8,7 @@ import {
 import { useMemo, useState } from "react";
 import { Link, NavLink } from "react-router";
 import { useCatalogData } from "~/hooks/useCatalogData";
+import { useCartData } from "~/hooks/useCartData";
 import Container from "./Container";
 import Logo from "./Logo";
 import MobileMenu from "./MobileMenu";
@@ -23,6 +24,7 @@ const navItems = [
 export default function Header() {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { catalogData } = useCatalogData();
+  const { itemCount } = useCartData();
 
   const categoryColumns = useMemo(() => {
     const items = catalogData.categories || [];
@@ -45,7 +47,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
-      <Container className="flex h-20 items-center gap-4">
+      <Container className="flex h-16 items-center gap-2.5 sm:h-[4.5rem] sm:gap-3 md:h-20 md:gap-4">
         <div className="md:hidden">
           <MobileMenu />
         </div>
@@ -83,12 +85,14 @@ export default function Header() {
           </Link>
           <Link
             to="/cart"
-            className="relative inline-flex rounded-full bg-indigo-600 p-3 text-white transition hover:bg-indigo-700"
+            className="relative inline-flex rounded-full bg-indigo-600 p-2.5 text-white transition hover:bg-indigo-700 sm:p-3"
           >
-            <ShoppingCart size={18} />
-            <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-950 px-1 text-[10px] font-semibold">
-              2
-            </span>
+            <ShoppingCart size={17} />
+            {itemCount ? (
+              <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-950 px-1 text-[10px] font-semibold">
+                {itemCount}
+              </span>
+            ) : null}
           </Link>
         </div>
       </Container>
@@ -215,7 +219,7 @@ export default function Header() {
         </Container>
       </div>
 
-      <Container className="pb-3 md:hidden">
+      <Container className="border-t border-slate-200/70 py-3 md:hidden">
         <SearchBar compact />
       </Container>
     </header>
