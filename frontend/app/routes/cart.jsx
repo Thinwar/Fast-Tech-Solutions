@@ -1,3 +1,4 @@
+import { useAuth, useUser } from "@clerk/react-router";
 import {
   CreditCard,
   Minus,
@@ -7,15 +8,23 @@ import {
   Trash2,
   Truck,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import Container from "~/components/ui/Container";
 import { formatPrice, getProductBySlug } from "~/data/catalog";
 import { useCartData } from "~/hooks/useCartData";
 import { useCatalogData } from "~/hooks/useCatalogData";
+import { usePurchaseData } from "~/hooks/usePurchaseData";
+
+const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
 export default function CartPage() {
+  const navigate = useNavigate();
   const { catalogData } = useCatalogData();
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useCartData();
+  const auth = clerkEnabled ? useAuth() : null;
+  const userState = clerkEnabled ? useUser() : null;
+  const userId = auth?.userId || "";
+  const { recordPurchase } = usePurchaseData(userId);
 
   const items = cartItems
     .map((item) => {
@@ -25,6 +34,44 @@ export default function CartPage() {
     .filter(Boolean);
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shippingFee = 1500;
+  const total = subtotal + shippingFee;
+
+  const handleCheckout = () => {
+    if (!items.length) {
+      return;
+    }
+
+    if (clerkEnabled && !auth?.isSignedIn) {
+      navigate("/sign-in");
+      return;
+    }
+
+    if (!userId) {
+      return;
+    }
+
+    const purchase = recordPurchase({
+      userId,
+      customerName: userState?.user?.fullName || userState?.user?.firstName || "Fast Tech customer",
+      customerEmail: userState?.user?.primaryEmailAddress?.emailAddress || "",
+      subtotal,
+      shippingFee,
+      total,
+      status: "confirmed",
+      items: items.map((item) => ({
+        slug: item.slug,
+        name: item.name,
+        brand: item.brand,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+      })),
+    });
+
+    clearCart();
+    navigate(`/account/orders?recent=${encodeURIComponent(purchase.id)}`);
+  };
 
   if (!items.length) {
     return (
@@ -120,17 +167,39 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between">
                 <span>Delivery</span>
-                <span>{formatPrice(1500)}</span>
+                <span>{formatPrice(shippingFee)}</span>
               </div>
             </div>
             <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-4 text-lg font-semibold text-slate-950">
               <span>Total</span>
-              <span>{formatPrice(subtotal + 1500)}</span>
+              <span>{formatPrice(total)}</span>
             </div>
-            <button className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
+            <button
+              type="button"
+              onClick={handleCheckout}
+              disabled={!clerkEnabled}
+              className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition ${
+                clerkEnabled
+                  ? "bg-indigo-600 hover:bg-indigo-700"
+                  : "cursor-not-allowed bg-slate-300"
+              }`}
+            >
               <CreditCard size={18} />
-              Proceed to checkout
+              {!clerkEnabled
+                ? "Enable Clerk to checkout"
+                : !auth?.isSignedIn
+                  ? "Sign in to checkout"
+                  : "Complete checkout"}
             </button>
+            {clerkEnabled ? (
+              <p className="mt-3 text-center text-xs text-slate-500">
+                Signed-in checkouts are saved to your order history automatically.
+              </p>
+            ) : (
+              <p className="mt-3 text-center text-xs text-slate-500">
+                Add `VITE_CLERK_PUBLISHABLE_KEY` to enable signed-in checkout and order tracking.
+              </p>
+            )}
             <button
               type="button"
               onClick={clearCart}

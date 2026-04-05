@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/react-router";
 import {
   ChevronDown,
   Grid2x2,
@@ -5,8 +6,8 @@ import {
   ShoppingCart,
   Sparkles,
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link, NavLink } from "react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router";
 import { useCatalogData } from "~/hooks/useCatalogData";
 import { useCartData } from "~/hooks/useCartData";
 import Container from "./Container";
@@ -20,11 +21,75 @@ const navItems = [
   { title: "Guides", href: "/guides" },
   { title: "Deals", href: "/deals" },
 ];
+const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
 export default function Header() {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { catalogData } = useCatalogData();
   const { itemCount } = useCartData();
+  const auth = clerkEnabled ? useAuth() : null;
+  const megaMenuRef = useRef(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!categoriesOpen || typeof window === "undefined") {
+      return undefined;
+    }
+
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") {
+        setCategoriesOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [categoriesOpen]);
+
+  useEffect(() => {
+    if (!categoriesOpen || typeof window === "undefined") {
+      return undefined;
+    }
+
+    const closeOnScroll = () => setCategoriesOpen(false);
+
+    window.addEventListener("scroll", closeOnScroll, { passive: true });
+    return () => window.removeEventListener("scroll", closeOnScroll);
+  }, [categoriesOpen]);
+
+  useEffect(() => {
+    if (!categoriesOpen || typeof document === "undefined") {
+      return undefined;
+    }
+
+    const closeOnPointerDown = (event) => {
+      if (!megaMenuRef.current?.contains(event.target)) {
+        setCategoriesOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeOnPointerDown);
+    return () => document.removeEventListener("mousedown", closeOnPointerDown);
+  }, [categoriesOpen]);
+
+  useEffect(() => {
+    setCategoriesOpen(false);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!categoriesOpen || typeof window === "undefined") {
+      return undefined;
+    }
+
+    const closeOnResize = () => {
+      if (window.innerWidth < 768) {
+        setCategoriesOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", closeOnResize);
+    return () => window.removeEventListener("resize", closeOnResize);
+  }, [categoriesOpen]);
 
   const categoryColumns = useMemo(() => {
     const items = catalogData.categories || [];
@@ -46,7 +111,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-[90] isolate overflow-visible border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
       <Container className="flex h-16 items-center gap-2.5 sm:h-[4.5rem] sm:gap-3 md:h-20 md:gap-4">
         <div className="md:hidden">
           <MobileMenu />
@@ -77,6 +142,26 @@ export default function Header() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          {clerkEnabled ? (
+            <>
+              {!auth?.isSignedIn ? (
+                <Link
+                  to="/sign-in"
+                  className="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700 lg:inline-flex"
+                >
+                  Sign in
+                </Link>
+              ) : null}
+              {auth?.isSignedIn ? (
+                <Link
+                  to="/account/orders"
+                  className="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700 lg:inline-flex"
+                >
+                  My orders
+                </Link>
+              ) : null}
+            </>
+          ) : null}
           <Link
             to="/shop"
             className="hidden rounded-full border border-slate-200 p-2.5 text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 sm:inline-flex"
@@ -97,12 +182,14 @@ export default function Header() {
         </div>
       </Container>
 
-      <div className="hidden border-t border-white/10 bg-slate-900 text-white md:block">
-        <Container className="relative">
+      <div className="relative z-20 hidden overflow-visible border-t border-white/10 bg-slate-900 text-white md:block">
+        <Container className="relative overflow-visible">
           <div className="flex h-16 items-center gap-8 overflow-x-auto whitespace-nowrap">
             <button
               type="button"
               onClick={() => setCategoriesOpen((current) => !current)}
+              aria-expanded={categoriesOpen}
+              aria-controls="desktop-categories-menu"
               className={`inline-flex items-center gap-3 rounded-full px-5 py-3 text-sm font-semibold transition ${
                 categoriesOpen
                   ? "bg-white text-slate-950"
@@ -137,8 +224,20 @@ export default function Header() {
           </div>
 
           {categoriesOpen ? (
-            <div className="absolute inset-x-0 top-full z-50 border-t border-white/10 bg-slate-950 text-white shadow-2xl">
-              <div className="grid gap-10 px-6 py-8 lg:grid-cols-[1.15fr_0.9fr_0.9fr_1fr]">
+            <>
+              <button
+                type="button"
+                aria-label="Close categories menu"
+                onClick={() => setCategoriesOpen(false)}
+                className="fixed inset-x-0 bottom-0 top-36 z-[100] bg-slate-950/10 backdrop-blur-[1px]"
+              />
+
+              <div
+                id="desktop-categories-menu"
+                ref={megaMenuRef}
+                className="fixed left-1/2 top-36 z-[110] max-h-[calc(100vh-10rem)] w-[min(80rem,calc(100vw-2rem))] -translate-x-1/2 overflow-y-auto rounded-[28px] border border-white/10 bg-slate-950 text-white shadow-[0_32px_90px_-28px_rgba(2,6,23,0.72)]"
+              >
+                <div className="grid gap-10 px-6 py-8 lg:grid-cols-[1.15fr_0.9fr_0.9fr_1fr]">
                 <div className="space-y-5">
                   <h3 className="font-display text-2xl font-semibold text-white">
                     All Categories
@@ -213,8 +312,9 @@ export default function Header() {
                     </p>
                   </div>
                 </div>
+                </div>
               </div>
-            </div>
+            </>
           ) : null}
         </Container>
       </div>

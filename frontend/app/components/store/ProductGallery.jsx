@@ -6,7 +6,7 @@ export default function ProductGallery({ product }) {
 
   return (
     <div className="space-y-4">
-      <ProductVisual product={product} />
+      <ProductVisual product={product} activeIndex={activeIndex} />
 
       <div className="grid grid-cols-3 gap-3">
         {product.gallery.map((item, index) => (

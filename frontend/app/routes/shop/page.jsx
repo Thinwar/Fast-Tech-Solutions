@@ -121,7 +121,7 @@ export default function ShopPage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:mt-8 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:mt-8 md:grid-cols-3 lg:grid-cols-4">
             {isLoading
               ? Array.from({ length: 6 }).map((_, index) => <ProductSkeleton key={index} />)
               : products.map((product) => <ProductCard key={product.slug} product={product} />)}

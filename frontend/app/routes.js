@@ -8,4 +8,7 @@ export default [
   route("guides", "routes/guides.jsx"),
   route("deals", "routes/deals.jsx"),
   route("cart", "routes/cart.jsx"),
+  route("sign-in", "routes/sign-in.jsx"),
+  route("sign-up", "routes/sign-up.jsx"),
+  route("account/orders", "routes/account.orders.jsx"),
 ];

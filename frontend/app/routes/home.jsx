@@ -186,7 +186,7 @@ export default function Home() {
             </Link>
           }
         />
-        <div className="mt-8 grid gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {isLoading
             ? Array.from({ length: 4 }).map((_, index) => <ProductSkeleton key={index} />)
             : featuredProducts.map((product) => (

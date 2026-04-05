@@ -147,7 +147,7 @@ export default function ProductDetailsPage() {
           title="You may also like"
           description="More products chosen to feel consistent with the premium category and brand direction."
         />
-        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {relatedProducts.map((item) => (
             <ProductCard key={item.slug} product={item} />
           ))}
