@@ -1,4 +1,4 @@
-import { findSessionByToken, getUserById } from "../lib/mongo.js";
+import { verifyToken } from "../lib/auth.js";
 
 function getBearerToken(header = "") {
   if (!header.startsWith("Bearer ")) return null;
@@ -15,27 +15,22 @@ export function requireBearerToken(req, res, next) {
   return next();
 }
 
-export async function requireAuth(req, res, next) {
+export function requireAuth(req, res, next) {
   const token = getBearerToken(req.headers.authorization);
   if (!token) {
     return res.status(401).json({ message: "Authentication required." });
   }
 
-  const session = await findSessionByToken(token);
-  if (!session) {
-    return res.status(401).json({ message: "Invalid or expired session." });
-  }
-
-  const user = await getUserById(session.userId);
-  if (!user) {
-    return res.status(401).json({ message: "User no longer exists." });
+  const decoded = verifyToken(token);
+  if (!decoded) {
+    return res.status(401).json({ message: "Invalid or expired token." });
   }
 
   req.user = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
+    id: decoded.id,
+    name: decoded.name,
+    email: decoded.email,
+    role: decoded.role,
   };
   req.token = token;
   return next();

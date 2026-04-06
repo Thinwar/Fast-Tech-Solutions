@@ -1,27 +1,65 @@
 import { useAuth, useUser } from "@clerk/react-router";
+import { useEffect, useState } from "react";
 import { Package, ShieldCheck, Truck } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import Container from "~/components/ui/Container";
 import { formatPrice } from "~/data/catalog";
-import { usePurchaseData } from "~/hooks/usePurchaseData";
+import { getMyOrders } from "~/hooks/useOrderApi";
 
 const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
 export function meta() {
   return [
     { title: "My Orders | Fast Tech" },
-    { name: "description", content: "Track your purchases and review recent orders." },
+    {
+      name: "description",
+      content: "Track your purchases and review recent orders.",
+    },
   ];
 }
 
 export default function AccountOrdersPage() {
+  const auth = useAuth();
+  const { user } = useUser();
+  const [searchParams] = useSearchParams();
+  const recentOrderId = searchParams.get("recent");
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!auth.isSignedIn) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
+
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        const token = await auth.getToken();
+        const data = await getMyOrders(token);
+        setOrders(data.orders || []);
+      } catch (error) {
+        console.error("Failed to load orders:", error);
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [auth]);
+
   if (!clerkEnabled) {
     return (
       <Container className="py-12 md:py-16">
         <div className="rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-3xl font-semibold text-slate-950">Order tracking needs Clerk</h1>
+          <h1 className="text-3xl font-semibold text-slate-950">
+            Order tracking needs Clerk
+          </h1>
           <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-            Add `VITE_CLERK_PUBLISHABLE_KEY` to enable customer accounts and order history.
+            Add `VITE_CLERK_PUBLISHABLE_KEY` to enable customer accounts and
+            order history.
           </p>
         </div>
       </Container>
@@ -38,9 +76,12 @@ export default function AccountOrdersPage() {
     return (
       <Container className="py-12 md:py-16">
         <div className="rounded-[32px] border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-3xl font-semibold text-slate-950">Sign in to view your orders</h1>
+          <h1 className="text-3xl font-semibold text-slate-950">
+            Sign in to view your orders
+          </h1>
           <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-            Your purchases and future order updates will appear here once you sign in.
+            Your purchases and future order updates will appear here once you
+            sign in.
           </p>
           <div className="mt-6 flex justify-center gap-3">
             <Link
@@ -75,7 +116,8 @@ export default function AccountOrdersPage() {
                   Track your purchases
                 </h1>
                 <p className="mt-2 text-slate-600">
-                  Every checkout made while signed in appears here for easy review.
+                  Every checkout made while signed in appears here for easy
+                  review.
                 </p>
               </div>
               <Link
@@ -86,7 +128,13 @@ export default function AccountOrdersPage() {
               </Link>
             </div>
 
-            {!purchases.length ? (
+            {loading ? (
+              <div className="mt-8 rounded-[24px] border border-slate-200 bg-white p-8 text-center shadow-sm">
+                <p className="text-lg font-semibold text-slate-950">
+                  Loading your orders...
+                </p>
+              </div>
+            ) : !orders.length ? (
               <div className="mt-8 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
                   <Package size={24} />
@@ -95,7 +143,8 @@ export default function AccountOrdersPage() {
                   No tracked purchases yet
                 </h2>
                 <p className="mx-auto mt-3 max-w-xl text-slate-600">
-                  Complete a checkout while signed in and your order history will start appearing here automatically.
+                  Complete a checkout while signed in and your order history
+                  will start appearing here automatically.
                 </p>
                 <Link
                   to="/shop"
@@ -167,7 +216,9 @@ export default function AccountOrdersPage() {
 
         <div className="space-y-4 lg:sticky lg:top-28 lg:self-start">
           <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-slate-950">Account details</h2>
+            <h2 className="text-2xl font-semibold text-slate-950">
+              Account details
+            </h2>
             <p className="mt-4 text-sm text-slate-500">Signed in as</p>
             <p className="mt-1 text-lg font-semibold text-slate-950">
               {user?.fullName || user?.firstName || "Fast Tech customer"}

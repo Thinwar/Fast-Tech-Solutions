@@ -4,13 +4,7 @@ import {
   hashPassword,
   verifyPassword,
 } from "../lib/auth.js";
-import {
-  createUser,
-  createSession,
-  deleteSessionByToken,
-  findUserByEmail,
-  getUserById,
-} from "../lib/mongo.js";
+import { createUser, findUserByEmail, getUserById } from "../lib/mongo.js";
 
 function sanitizeUser(user) {
   return {
@@ -47,15 +41,14 @@ export async function register(req, res) {
     createdAt: new Date().toISOString(),
   };
 
-  const token = createToken();
-  const session = {
-    token,
-    userId: newUser.id,
-    createdAt: new Date().toISOString(),
-  };
-
   await createUser(newUser);
-  await createSession(session);
+
+  const token = createToken({
+    id: newUser.id,
+    name: newUser.name,
+    email: newUser.email,
+    role: newUser.role,
+  });
 
   return res.status(201).json({
     message: "Registration successful.",
@@ -79,11 +72,11 @@ export async function login(req, res) {
     return res.status(401).json({ message: "Invalid email or password." });
   }
 
-  const token = createToken();
-  await createSession({
-    token,
-    userId: user.id,
-    createdAt: new Date().toISOString(),
+  const token = createToken({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
   });
 
   return res.json({
@@ -99,7 +92,6 @@ export async function me(req, res) {
 }
 
 export async function logout(req, res) {
-  await deleteSessionByToken(req.token);
   return res.json({ message: "Logged out successfully." });
 }
 

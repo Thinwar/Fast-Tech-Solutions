@@ -13,18 +13,18 @@ import Container from "~/components/ui/Container";
 import { formatPrice, getProductBySlug } from "~/data/catalog";
 import { useCartData } from "~/hooks/useCartData";
 import { useCatalogData } from "~/hooks/useCatalogData";
-import { usePurchaseData } from "~/hooks/usePurchaseData";
+import { createOrder } from "~/hooks/useOrderApi";
 
 const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
 export default function CartPage() {
   const navigate = useNavigate();
   const { catalogData } = useCatalogData();
-  const { cartItems, updateQuantity, removeFromCart, clearCart } = useCartData();
+  const { cartItems, updateQuantity, removeFromCart, clearCart } =
+    useCartData();
   const auth = clerkEnabled ? useAuth() : null;
   const userState = clerkEnabled ? useUser() : null;
   const userId = auth?.userId || "";
-  const { recordPurchase } = usePurchaseData(userId);
 
   const items = cartItems
     .map((item) => {
@@ -33,11 +33,14 @@ export default function CartPage() {
     })
     .filter(Boolean);
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
   const shippingFee = 1500;
   const total = subtotal + shippingFee;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!items.length) {
       return;
     }
@@ -51,26 +54,34 @@ export default function CartPage() {
       return;
     }
 
-    const purchase = recordPurchase({
-      userId,
-      customerName: userState?.user?.fullName || userState?.user?.firstName || "Fast Tech customer",
-      customerEmail: userState?.user?.primaryEmailAddress?.emailAddress || "",
-      subtotal,
-      shippingFee,
-      total,
-      status: "confirmed",
-      items: items.map((item) => ({
-        slug: item.slug,
-        name: item.name,
-        brand: item.brand,
-        price: item.price,
-        quantity: item.quantity,
-        image: item.image,
-      })),
-    });
+    try {
+      const token = await auth?.getToken?.();
+      const orderResponse = await createOrder(
+        {
+          items: items.map((item) => ({
+            productId: item.id,
+            quantity: item.quantity,
+          })),
+          shippingAddress: {
+            fullName:
+              userState?.user?.fullName ||
+              userState?.user?.firstName ||
+              "Fast Tech customer",
+            email: userState?.user?.primaryEmailAddress?.emailAddress || "",
+          },
+          paymentMethod: "cash_on_delivery",
+        },
+        token,
+      );
 
-    clearCart();
-    navigate(`/account/orders?recent=${encodeURIComponent(purchase.id)}`);
+      clearCart();
+      navigate(
+        `/account/orders?recent=${encodeURIComponent(orderResponse.order.id)}`,
+      );
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      // TODO: display an error message to the user
+    }
   };
 
   if (!items.length) {
@@ -80,9 +91,12 @@ export default function CartPage() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
             <ShoppingBag size={28} />
           </div>
-          <h1 className="mt-6 text-3xl font-semibold text-slate-950">Your cart is empty</h1>
+          <h1 className="mt-6 text-3xl font-semibold text-slate-950">
+            Your cart is empty
+          </h1>
           <p className="mx-auto mt-3 max-w-xl text-slate-600">
-            Start with a product you love, then come back here to review quantities and checkout details.
+            Start with a product you love, then come back here to review
+            quantities and checkout details.
           </p>
           <Link
             to="/shop"
@@ -102,7 +116,9 @@ export default function CartPage() {
           <p className="text-sm font-medium uppercase tracking-[0.24em] text-indigo-600">
             Cart
           </p>
-          <h1 className="mt-3 text-4xl font-semibold text-slate-950">Your premium picks</h1>
+          <h1 className="mt-3 text-4xl font-semibold text-slate-950">
+            Your premium picks
+          </h1>
           <div className="mt-8 space-y-4">
             {items.map((item) => (
               <div
@@ -110,7 +126,9 @@ export default function CartPage() {
                 className="flex flex-col gap-4 rounded-[24px] border border-slate-200 p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div>
-                  <p className="text-lg font-semibold text-slate-950">{item.name}</p>
+                  <p className="text-lg font-semibold text-slate-950">
+                    {item.name}
+                  </p>
                   <p className="mt-1 text-sm text-slate-500">
                     {item.brand} · {item.stock}
                   </p>
@@ -120,7 +138,9 @@ export default function CartPage() {
                   <div className="flex items-center rounded-full border border-slate-200">
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.slug, item.quantity - 1)}
+                      onClick={() =>
+                        updateQuantity(item.slug, item.quantity - 1)
+                      }
                       className="px-3 py-2 text-slate-600 transition hover:text-indigo-700"
                       aria-label={`Decrease quantity for ${item.name}`}
                     >
@@ -131,7 +151,9 @@ export default function CartPage() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.slug, item.quantity + 1)}
+                      onClick={() =>
+                        updateQuantity(item.slug, item.quantity + 1)
+                      }
                       className="px-3 py-2 text-slate-600 transition hover:text-indigo-700"
                       aria-label={`Increase quantity for ${item.name}`}
                     >
@@ -159,7 +181,9 @@ export default function CartPage() {
 
         <div className="space-y-4">
           <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-slate-950">Order summary</h2>
+            <h2 className="text-2xl font-semibold text-slate-950">
+              Order summary
+            </h2>
             <div className="mt-6 space-y-3 text-sm text-slate-600">
               <div className="flex justify-between">
                 <span>Subtotal</span>
@@ -193,11 +217,13 @@ export default function CartPage() {
             </button>
             {clerkEnabled ? (
               <p className="mt-3 text-center text-xs text-slate-500">
-                Signed-in checkouts are saved to your order history automatically.
+                Signed-in checkouts are saved to your order history
+                automatically.
               </p>
             ) : (
               <p className="mt-3 text-center text-xs text-slate-500">
-                Add `VITE_CLERK_PUBLISHABLE_KEY` to enable signed-in checkout and order tracking.
+                Add `VITE_CLERK_PUBLISHABLE_KEY` to enable signed-in checkout
+                and order tracking.
               </p>
             )}
             <button

@@ -26,16 +26,13 @@ export async function connectToDatabase() {
   await client.connect();
   db = client.db(mongoDbName);
 
+  // Create indexes for better query performance
   await Promise.all([
-    db.collection("users").createIndexes([{ key: { email: 1 }, unique: true }]),
-    db
-      .collection("sessions")
-      .createIndexes([{ key: { token: 1 }, unique: true }]),
-    db.collection("products").createIndexes([
-      { key: { id: 1 }, unique: true },
-      { key: { slug: 1 }, unique: true },
-    ]),
-    db.collection("orders").createIndexes([{ key: { id: 1 }, unique: true }]),
+    db.collection("users").createIndex({ email: 1 }, { unique: true }),
+    db.collection("products").createIndex({ id: 1 }, { unique: true }),
+    db.collection("products").createIndex({ slug: 1 }, { unique: true }),
+    db.collection("orders").createIndex({ id: 1 }, { unique: true }),
+    db.collection("orders").createIndex({ userId: 1 }),
   ]);
 
   await seedInitialData();
@@ -58,24 +55,22 @@ function collection(name) {
 
 async function seedInitialData() {
   const users = collection("users");
-  const sessions = collection("sessions");
   const products = collection("products");
   const orders = collection("orders");
 
   if ((await users.countDocuments({})) === 0) {
     await users.insertMany(seedData.users);
+    console.log(`✓ Seeded ${seedData.users.length} users`);
   }
 
   if ((await products.countDocuments({})) === 0) {
     await products.insertMany(seedData.products);
+    console.log(`✓ Seeded ${seedData.products.length} products`);
   }
 
-  if ((await orders.countDocuments({})) === 0) {
+  if ((await orders.countDocuments({})) === 0 && seedData.orders.length > 0) {
     await orders.insertMany(seedData.orders);
-  }
-
-  if ((await sessions.countDocuments({})) === 0) {
-    await sessions.deleteMany({});
+    console.log(`✓ Seeded ${seedData.orders.length} orders`);
   }
 }
 
