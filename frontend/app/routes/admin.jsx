@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Container from "~/components/ui/Container";
 import { createSlug } from "~/data/catalog";
+import { useAdminSession } from "~/hooks/useAdminSession";
 import { useCatalogData } from "~/hooks/useCatalogData";
 
 const emptyProduct = {
@@ -74,7 +75,73 @@ function Textarea({ label, ...props }) {
   );
 }
 
+function AdminLoginGate({ session }) {
+  const [form, setForm] = useState({ email: "", password: "" });
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    await session.login(form.email, form.password);
+  };
+
+  return (
+    <Container className="py-16 md:py-24">
+      <div className="mx-auto max-w-xl rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm md:p-10">
+        <p className="text-sm font-medium uppercase tracking-[0.24em] text-indigo-600">
+          Restricted access
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold text-slate-950">
+          Admin sign in required
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          This workspace is limited to approved admin accounts. Sign in with your
+          backend admin credentials to continue.
+        </p>
+
+        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+          <Input
+            label="Admin email"
+            type="email"
+            autoComplete="username"
+            value={form.email}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, email: event.target.value }))
+            }
+          />
+          <Input
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            value={form.password}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, password: event.target.value }))
+            }
+          />
+
+          {session.error ? (
+            <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {session.error}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={session.isChecking || session.isSubmitting}
+            className="w-full rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {session.isChecking
+              ? "Checking session..."
+              : session.isSubmitting
+                ? "Signing in..."
+                : "Sign in"}
+          </button>
+        </form>
+      </div>
+    </Container>
+  );
+}
+
 export default function AdminPage() {
+  const adminSession = useAdminSession();
   const { catalogData, setCatalogData, resetCatalogData } = useCatalogData();
   const [productDraft, setProductDraft] = useState(emptyProduct);
   const [editingProductSlug, setEditingProductSlug] = useState("");
@@ -82,6 +149,10 @@ export default function AdminPage() {
   const [editingCategorySlug, setEditingCategorySlug] = useState("");
   const [guideDraft, setGuideDraft] = useState(emptyGuide);
   const [editingGuideSlug, setEditingGuideSlug] = useState("");
+
+  if (!adminSession.isAuthenticated) {
+    return <AdminLoginGate session={adminSession} />;
+  }
 
   const upsertProduct = () => {
     const slug = createSlug(productDraft.slug || productDraft.name);
@@ -172,6 +243,13 @@ export default function AdminPage() {
           className="rounded-full border border-red-200 px-5 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
         >
           Reset demo data
+        </button>
+        <button
+          type="button"
+          onClick={adminSession.logout}
+          className="rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+        >
+          Sign out
         </button>
       </div>
 

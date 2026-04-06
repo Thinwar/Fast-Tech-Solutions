@@ -72,9 +72,6 @@ export default function Footer() {
             <Link to="/cart" className="block transition hover:text-white">
               Cart
             </Link>
-            <Link to="/admin" className="block transition hover:text-white">
-              Admin panel
-            </Link>
           </div>
         </div>
 

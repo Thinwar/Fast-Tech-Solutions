@@ -305,10 +305,10 @@ export default function Header() {
                   <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
                     <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-indigo-300">
                       <Sparkles size={14} />
-                      Admin synced
+                      Live catalog
                     </div>
                     <p className="mt-3 text-sm leading-6 text-slate-300">
-                      Any category you add in the admin panel appears here automatically.
+                      Category updates are reflected here automatically.
                     </p>
                   </div>
                 </div>
