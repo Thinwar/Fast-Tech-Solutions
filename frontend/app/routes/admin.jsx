@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { SignIn, useAuth } from "@clerk/react-router";
 import Container from "~/components/ui/Container";
 import { createSlug } from "~/data/catalog";
-import { useAdminSession } from "~/hooks/useAdminSession";
 import { useCatalogData } from "~/hooks/useCatalogData";
 
 const emptyProduct = {
@@ -45,7 +45,9 @@ function AdminSection({ title, description, children }) {
   return (
     <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
       <h2 className="text-2xl font-semibold text-slate-950">{title}</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{description}</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+        {description}
+      </p>
       <div className="mt-8">{children}</div>
     </section>
   );
@@ -75,14 +77,7 @@ function Textarea({ label, ...props }) {
   );
 }
 
-function AdminLoginGate({ session }) {
-  const [form, setForm] = useState({ email: "", password: "" });
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    await session.login(form.email, form.password);
-  };
-
+function AdminLoginGate() {
   return (
     <Container className="py-16 md:py-24">
       <div className="mx-auto max-w-xl rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm md:p-10">
@@ -93,55 +88,24 @@ function AdminLoginGate({ session }) {
           Admin sign in required
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          This workspace is limited to approved admin accounts. Sign in with your
-          backend admin credentials to continue.
+          This workspace is limited to approved admin accounts. Sign in with
+          your account to continue.
         </p>
 
-        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          <Input
-            label="Admin email"
-            type="email"
-            autoComplete="username"
-            value={form.email}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, email: event.target.value }))
-            }
+        <div className="mt-8 flex justify-center">
+          <SignIn
+            afterSignInUrl="/admin"
+            fallbackRedirectUrl="/admin"
+            signUpUrl="/sign-up"
           />
-          <Input
-            label="Password"
-            type="password"
-            autoComplete="current-password"
-            value={form.password}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, password: event.target.value }))
-            }
-          />
-
-          {session.error ? (
-            <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {session.error}
-            </p>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={session.isChecking || session.isSubmitting}
-            className="w-full rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {session.isChecking
-              ? "Checking session..."
-              : session.isSubmitting
-                ? "Signing in..."
-                : "Sign in"}
-          </button>
-        </form>
+        </div>
       </div>
     </Container>
   );
 }
 
 export default function AdminPage() {
-  const adminSession = useAdminSession();
+  const { isLoaded, isSignedIn, signOut } = useAuth();
   const { catalogData, setCatalogData, resetCatalogData } = useCatalogData();
   const [productDraft, setProductDraft] = useState(emptyProduct);
   const [editingProductSlug, setEditingProductSlug] = useState("");
@@ -150,8 +114,18 @@ export default function AdminPage() {
   const [guideDraft, setGuideDraft] = useState(emptyGuide);
   const [editingGuideSlug, setEditingGuideSlug] = useState("");
 
-  if (!adminSession.isAuthenticated) {
-    return <AdminLoginGate session={adminSession} />;
+  if (!isLoaded) {
+    return (
+      <Container className="py-16 md:py-24">
+        <div className="mx-auto max-w-xl rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm md:p-10">
+          <p className="text-sm text-slate-600">Loading authentication…</p>
+        </div>
+      </Container>
+    );
+  }
+
+  if (!isSignedIn) {
+    return <AdminLoginGate />;
   }
 
   const upsertProduct = () => {
@@ -176,7 +150,9 @@ export default function AdminPage() {
 
     setCatalogData((current) => {
       const products = editingProductSlug
-        ? current.products.map((item) => (item.slug === editingProductSlug ? product : item))
+        ? current.products.map((item) =>
+            item.slug === editingProductSlug ? product : item,
+          )
         : [product, ...current.products];
       return { ...current, products };
     });
@@ -214,7 +190,9 @@ export default function AdminPage() {
 
     setCatalogData((current) => {
       const guides = editingGuideSlug
-        ? current.guides.map((item) => (item.slug === editingGuideSlug ? guide : item))
+        ? current.guides.map((item) =>
+            item.slug === editingGuideSlug ? guide : item,
+          )
         : [...current.guides, guide];
       return { ...current, guides };
     });
@@ -234,7 +212,9 @@ export default function AdminPage() {
             Manage real storefront data
           </h1>
           <p className="mt-3 max-w-2xl text-slate-600">
-            Replace the demo catalog with your actual products, categories, guides, and store contact details. Changes are saved in your browser immediately.
+            Replace the demo catalog with your actual products, categories,
+            guides, and store contact details. Changes are saved in your browser
+            immediately.
           </p>
         </div>
         <button
@@ -246,7 +226,7 @@ export default function AdminPage() {
         </button>
         <button
           type="button"
-          onClick={adminSession.logout}
+          onClick={async () => await signOut()}
           className="rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
         >
           Sign out
@@ -367,8 +347,12 @@ export default function AdminPage() {
                 className="flex items-center justify-between rounded-2xl border border-slate-200 p-4"
               >
                 <div>
-                  <p className="font-semibold text-slate-950">{category.title}</p>
-                  <p className="mt-1 text-sm text-slate-500">{category.description}</p>
+                  <p className="font-semibold text-slate-950">
+                    {category.title}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {category.description}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -416,7 +400,10 @@ export default function AdminPage() {
               label="Slug"
               value={categoryDraft.slug}
               onChange={(event) =>
-                setCategoryDraft((current) => ({ ...current, slug: event.target.value }))
+                setCategoryDraft((current) => ({
+                  ...current,
+                  slug: event.target.value,
+                }))
               }
             />
             <Textarea
@@ -456,7 +443,9 @@ export default function AdminPage() {
                   <p className="mt-1 text-sm text-slate-500">
                     {`${product.brand} · ${product.category} · KSh ${product.price}`}
                   </p>
-                  <p className="mt-2 text-sm text-slate-600">{product.summary}</p>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {product.summary}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -502,35 +491,50 @@ export default function AdminPage() {
                 label="Product name"
                 value={productDraft.name}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, name: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    name: event.target.value,
+                  }))
                 }
               />
               <Input
                 label="Brand"
                 value={productDraft.brand}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, brand: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    brand: event.target.value,
+                  }))
                 }
               />
               <Input
                 label="Category slug"
                 value={productDraft.category}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, category: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    category: event.target.value,
+                  }))
                 }
               />
               <Input
                 label="Image URL"
                 value={productDraft.image}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, image: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    image: event.target.value,
+                  }))
                 }
               />
               <Input
                 label="Price"
                 value={productDraft.price}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, price: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    price: event.target.value,
+                  }))
                 }
               />
               <Input
@@ -547,49 +551,70 @@ export default function AdminPage() {
                 label="Badge"
                 value={productDraft.badge}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, badge: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    badge: event.target.value,
+                  }))
                 }
               />
               <Input
                 label="Stock"
                 value={productDraft.stock}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, stock: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    stock: event.target.value,
+                  }))
                 }
               />
               <Input
                 label="Rating"
                 value={productDraft.rating}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, rating: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    rating: event.target.value,
+                  }))
                 }
               />
               <Input
                 label="Reviews"
                 value={productDraft.reviews}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, reviews: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    reviews: event.target.value,
+                  }))
                 }
               />
               <Input
                 label="Delivery"
                 value={productDraft.delivery}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, delivery: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    delivery: event.target.value,
+                  }))
                 }
               />
               <Input
                 label="Warranty"
                 value={productDraft.warranty}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, warranty: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    warranty: event.target.value,
+                  }))
                 }
               />
               <Input
                 label="Accent classes"
                 value={productDraft.accent}
                 onChange={(event) =>
-                  setProductDraft((current) => ({ ...current, accent: event.target.value }))
+                  setProductDraft((current) => ({
+                    ...current,
+                    accent: event.target.value,
+                  }))
                 }
               />
             </div>
@@ -598,7 +623,10 @@ export default function AdminPage() {
               label="Summary"
               value={productDraft.summary}
               onChange={(event) =>
-                setProductDraft((current) => ({ ...current, summary: event.target.value }))
+                setProductDraft((current) => ({
+                  ...current,
+                  summary: event.target.value,
+                }))
               }
             />
             <Textarea
@@ -615,14 +643,20 @@ export default function AdminPage() {
               label="Specs (comma separated)"
               value={productDraft.specs}
               onChange={(event) =>
-                setProductDraft((current) => ({ ...current, specs: event.target.value }))
+                setProductDraft((current) => ({
+                  ...current,
+                  specs: event.target.value,
+                }))
               }
             />
             <Textarea
               label="Gallery labels (comma separated)"
               value={productDraft.gallery}
               onChange={(event) =>
-                setProductDraft((current) => ({ ...current, gallery: event.target.value }))
+                setProductDraft((current) => ({
+                  ...current,
+                  gallery: event.target.value,
+                }))
               }
             />
 
@@ -682,7 +716,9 @@ export default function AdminPage() {
                     onClick={() =>
                       setCatalogData((current) => ({
                         ...current,
-                        guides: current.guides.filter((item) => item.slug !== guide.slug),
+                        guides: current.guides.filter(
+                          (item) => item.slug !== guide.slug,
+                        ),
                       }))
                     }
                     className="rounded-full border border-red-200 px-3 py-1.5 text-sm text-red-600"
@@ -699,21 +735,30 @@ export default function AdminPage() {
               label="Title"
               value={guideDraft.title}
               onChange={(event) =>
-                setGuideDraft((current) => ({ ...current, title: event.target.value }))
+                setGuideDraft((current) => ({
+                  ...current,
+                  title: event.target.value,
+                }))
               }
             />
             <Input
               label="Slug"
               value={guideDraft.slug}
               onChange={(event) =>
-                setGuideDraft((current) => ({ ...current, slug: event.target.value }))
+                setGuideDraft((current) => ({
+                  ...current,
+                  slug: event.target.value,
+                }))
               }
             />
             <Textarea
               label="Excerpt"
               value={guideDraft.excerpt}
               onChange={(event) =>
-                setGuideDraft((current) => ({ ...current, excerpt: event.target.value }))
+                setGuideDraft((current) => ({
+                  ...current,
+                  excerpt: event.target.value,
+                }))
               }
             />
             <button

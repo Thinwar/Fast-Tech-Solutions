@@ -1,5 +1,11 @@
 import { createId } from "../lib/auth.js";
-import { readDb, updateDb } from "../lib/store.js";
+import {
+  createProduct as insertProduct,
+  deleteProductById,
+  getProductByIdOrSlug,
+  listProducts as fetchProducts,
+  updateProductById,
+} from "../lib/mongo.js";
 
 function createSlug(value) {
   return String(value || "")
@@ -9,28 +15,20 @@ function createSlug(value) {
     .replace(/(^-|-$)/g, "");
 }
 
-export function listProducts(req, res) {
+export async function listProducts(req, res) {
   const { category, brand, status } = req.query;
-  let products = [...readDb().products];
+  const filters = {};
 
-  if (category) {
-    products = products.filter((item) => item.category === category);
-  }
-  if (brand) {
-    products = products.filter((item) => item.brand === brand);
-  }
-  if (status) {
-    products = products.filter((item) => item.status === status);
-  }
+  if (category) filters.category = category;
+  if (brand) filters.brand = brand;
+  if (status) filters.status = status;
 
+  const products = await fetchProducts(filters);
   return res.json({ count: products.length, products });
 }
 
-export function getProduct(req, res) {
-  const db = readDb();
-  const product = db.products.find(
-    (item) => item.id === req.params.id || item.slug === req.params.id,
-  );
+export async function getProduct(req, res) {
+  const product = await getProductByIdOrSlug(req.params.id);
 
   if (!product) {
     return res.status(404).json({ message: "Product not found." });
@@ -39,10 +37,15 @@ export function getProduct(req, res) {
   return res.json({ product });
 }
 
-export function createProduct(req, res) {
+export async function createProduct(req, res) {
   const payload = req.body || {};
 
-  if (!payload.name || !payload.brand || !payload.category || payload.price === undefined) {
+  if (
+    !payload.name ||
+    !payload.brand ||
+    !payload.category ||
+    payload.price === undefined
+  ) {
     return res.status(400).json({
       message: "name, brand, category, and price are required.",
     });
@@ -65,38 +68,32 @@ export function createProduct(req, res) {
     updatedAt: new Date().toISOString(),
   };
 
-  updateDb((current) => {
-    current.products.push(product);
-    return current;
-  });
-
+  await insertProduct(product);
   return res.status(201).json({ message: "Product created.", product });
 }
 
-export function updateProduct(req, res) {
+export async function updateProduct(req, res) {
   const payload = req.body || {};
-  let updatedProduct = null;
 
-  updateDb((current) => {
-    current.products = current.products.map((product) => {
-      if (product.id !== req.params.id) return product;
+  const update = {
+    ...payload,
+    slug: payload.slug ? createSlug(payload.slug) : undefined,
+    price: payload.price !== undefined ? Number(payload.price) : undefined,
+    originalPrice:
+      payload.originalPrice !== undefined
+        ? Number(payload.originalPrice)
+        : undefined,
+    stock: payload.stock !== undefined ? Number(payload.stock) : undefined,
+    updatedAt: new Date().toISOString(),
+  };
 
-      updatedProduct = {
-        ...product,
-        ...payload,
-        slug: payload.slug ? createSlug(payload.slug) : product.slug,
-        price: payload.price !== undefined ? Number(payload.price) : product.price,
-        originalPrice:
-          payload.originalPrice !== undefined
-            ? Number(payload.originalPrice)
-            : product.originalPrice,
-        stock: payload.stock !== undefined ? Number(payload.stock) : product.stock,
-        updatedAt: new Date().toISOString(),
-      };
-      return updatedProduct;
-    });
-    return current;
+  Object.keys(update).forEach((key) => {
+    if (update[key] === undefined) {
+      delete update[key];
+    }
   });
+
+  const updatedProduct = await updateProductById(req.params.id, update);
 
   if (!updatedProduct) {
     return res.status(404).json({ message: "Product not found." });
@@ -105,20 +102,8 @@ export function updateProduct(req, res) {
   return res.json({ message: "Product updated.", product: updatedProduct });
 }
 
-export function deleteProduct(req, res) {
-  let removed = false;
-
-  updateDb((current) => {
-    const nextProducts = current.products.filter((product) => {
-      if (product.id === req.params.id) {
-        removed = true;
-        return false;
-      }
-      return true;
-    });
-    current.products = nextProducts;
-    return current;
-  });
+export async function deleteProduct(req, res) {
+  const removed = await deleteProductById(req.params.id);
 
   if (!removed) {
     return res.status(404).json({ message: "Product not found." });

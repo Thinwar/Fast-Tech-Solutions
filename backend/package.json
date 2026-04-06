@@ -8,6 +8,8 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "dotenv": "^16.0.0",
+    "express": "^5.1.0",
+    "mongodb": "^5.10.0"
   }
 }

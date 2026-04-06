@@ -1,5 +1,10 @@
 import { createId } from "../lib/auth.js";
-import { readDb, updateDb } from "../lib/store.js";
+import {
+  createOrder as insertOrder,
+  listOrders as fetchOrders,
+  listProducts as fetchProducts,
+  updateOrderStatusById,
+} from "../lib/mongo.js";
 
 function calculateTotals(products, items) {
   const normalizedItems = items.map((item) => {
@@ -18,7 +23,10 @@ function calculateTotals(products, items) {
     };
   });
 
-  const subtotal = normalizedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+  const subtotal = normalizedItems.reduce(
+    (sum, item) => sum + item.lineTotal,
+    0,
+  );
   const shippingFee = subtotal >= 100000 ? 0 : 1500;
 
   return {
@@ -29,18 +37,22 @@ function calculateTotals(products, items) {
   };
 }
 
-export function createOrder(req, res) {
-  const { items, shippingAddress, paymentMethod = "cash_on_delivery" } = req.body || {};
+export async function createOrder(req, res) {
+  const {
+    items,
+    shippingAddress,
+    paymentMethod = "cash_on_delivery",
+  } = req.body || {};
 
   if (!Array.isArray(items) || !items.length) {
     return res.status(400).json({ message: "Order items are required." });
   }
 
-  const db = readDb();
+  const products = await fetchProducts();
 
   let totals;
   try {
-    totals = calculateTotals(db.products, items);
+    totals = calculateTotals(products, items);
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
@@ -59,44 +71,28 @@ export function createOrder(req, res) {
     updatedAt: new Date().toISOString(),
   };
 
-  updateDb((current) => {
-    current.orders.push(order);
-    return current;
-  });
+  await insertOrder(order);
 
   return res.status(201).json({ message: "Order placed successfully.", order });
 }
 
-export function listMyOrders(req, res) {
-  const db = readDb();
-  const orders = db.orders.filter((order) => order.userId === req.user.id);
+export async function listMyOrders(req, res) {
+  const orders = await fetchOrders({ userId: req.user.id });
   return res.json({ count: orders.length, orders });
 }
 
-export function listOrders(req, res) {
-  const db = readDb();
-  return res.json({ count: db.orders.length, orders: db.orders });
+export async function listOrders(req, res) {
+  const orders = await fetchOrders();
+  return res.json({ count: orders.length, orders });
 }
 
-export function updateOrderStatus(req, res) {
+export async function updateOrderStatus(req, res) {
   const { status } = req.body || {};
   if (!status) {
     return res.status(400).json({ message: "status is required." });
   }
 
-  let updatedOrder = null;
-  updateDb((current) => {
-    current.orders = current.orders.map((order) => {
-      if (order.id !== req.params.id) return order;
-      updatedOrder = {
-        ...order,
-        status,
-        updatedAt: new Date().toISOString(),
-      };
-      return updatedOrder;
-    });
-    return current;
-  });
+  const updatedOrder = await updateOrderStatusById(req.params.id, status);
 
   if (!updatedOrder) {
     return res.status(404).json({ message: "Order not found." });

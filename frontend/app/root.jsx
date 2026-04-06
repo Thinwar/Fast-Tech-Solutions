@@ -63,7 +63,11 @@ export default function App() {
   }
 
   return (
-    <ClerkProvider publishableKey={clerkPublishableKey}>
+    <ClerkProvider
+      publishableKey={clerkPublishableKey}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+    >
       {appShell}
     </ClerkProvider>
   );

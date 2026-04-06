@@ -1,10 +1,9 @@
+import { useAuth } from "@clerk/react-router";
 import { useEffect, useState } from "react";
 
-const STORAGE_KEY = "fast-tech-admin-session";
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:4000").replace(
-  /\/$/,
-  "",
-);
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+  ? import.meta.env.VITE_API_BASE_URL.replace(/\/$/, "")
+  : "";
 
 async function request(path, options = {}) {
   const response = await fetch(`${apiBaseUrl}${path}`, {
@@ -29,151 +28,89 @@ async function request(path, options = {}) {
   return payload;
 }
 
-function readStoredSession() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const rawValue = window.localStorage.getItem(STORAGE_KEY);
-  if (!rawValue) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawValue);
-  } catch {
-    window.localStorage.removeItem(STORAGE_KEY);
-    return null;
-  }
-}
-
-function writeStoredSession(session) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  if (!session) {
-    window.localStorage.removeItem(STORAGE_KEY);
-    return;
-  }
-
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-}
-
 export function useAdminSession() {
-  const [token, setToken] = useState(() => readStoredSession()?.token || "");
-  const [user, setUser] = useState(() => readStoredSession()?.user || null);
+  const { isLoaded, isSignedIn, user, getToken, signOut } = useAuth();
+  const [adminUser, setAdminUser] = useState(null);
   const [status, setStatus] = useState("checking");
   const [error, setError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
 
-    async function verifySession() {
-      if (!token) {
+    async function verifyAdminAccess() {
+      if (!isLoaded) {
+        return;
+      }
+
+      if (!isSignedIn) {
         if (!cancelled) {
-          setUser(null);
+          setAdminUser(null);
           setStatus("signed_out");
+          setError("");
         }
         return;
       }
 
       try {
-        const payload = await request("/api/auth/me", {
+        const token = await getToken();
+        const payload = await request("/api/auth/admin-check", {
+          method: "POST",
+          body: JSON.stringify({
+            email: user.primaryEmailAddress?.emailAddress,
+          }),
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         if (payload.user?.role !== "admin") {
-          throw new Error("Admin access required.");
+          await signOut();
+          if (!cancelled) {
+            setAdminUser(null);
+            setStatus("signed_out");
+            setError("This account does not have admin access.");
+          }
+          return;
         }
 
         if (!cancelled) {
-          setUser(payload.user);
+          setAdminUser(payload.user);
           setStatus("authenticated");
           setError("");
-          writeStoredSession({ token, user: payload.user });
         }
       } catch (sessionError) {
         if (!cancelled) {
-          setToken("");
-          setUser(null);
+          setAdminUser(null);
           setStatus("signed_out");
-          setError(sessionError.message || "Your admin session has expired.");
-          writeStoredSession(null);
+          setError(sessionError.message || "Admin access verification failed.");
         }
       }
     }
 
-    verifySession();
+    verifyAdminAccess();
 
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [isLoaded, isSignedIn, user, getToken, signOut]);
 
-  async function login(email, password) {
-    setStatus("authenticating");
-    setError("");
-
+  const logout = async () => {
     try {
-      const payload = await request("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (payload.user?.role !== "admin") {
-        throw new Error("This account does not have admin access.");
-      }
-
-      writeStoredSession({ token: payload.token, user: payload.user });
-      setToken(payload.token);
-      setUser(payload.user);
-      setStatus("authenticated");
-      return true;
-    } catch (loginError) {
-      writeStoredSession(null);
-      setToken("");
-      setUser(null);
+      await signOut();
+      setAdminUser(null);
       setStatus("signed_out");
-      setError(loginError.message || "Unable to sign in.");
-      return false;
-    }
-  }
-
-  async function logout() {
-    const currentToken = token;
-
-    writeStoredSession(null);
-    setToken("");
-    setUser(null);
-    setStatus("signed_out");
-    setError("");
-
-    if (!currentToken) {
-      return;
-    }
-
-    try {
-      await request("/api/auth/logout", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${currentToken}`,
-        },
-      });
+      setError("");
     } catch {
-      // Ignore logout failures because the local session is already cleared.
+      // Ignore logout failures
     }
-  }
+  };
 
   return {
     error,
-    isAuthenticated: status === "authenticated" && user?.role === "admin",
-    isChecking: status === "checking",
-    isSubmitting: status === "authenticating",
-    login,
+    isAuthenticated: status === "authenticated" && adminUser?.role === "admin",
+    isChecking: status === "checking" || !isLoaded,
+    isSubmitting: false,
     logout,
-    user,
+    user: adminUser,
   };
 }

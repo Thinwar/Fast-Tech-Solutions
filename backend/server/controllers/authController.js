@@ -1,5 +1,16 @@
-import { createId, createToken, hashPassword, verifyPassword } from "../lib/auth.js";
-import { readDb, updateDb } from "../lib/store.js";
+import {
+  createId,
+  createToken,
+  hashPassword,
+  verifyPassword,
+} from "../lib/auth.js";
+import {
+  createUser,
+  createSession,
+  deleteSessionByToken,
+  findUserByEmail,
+  getUserById,
+} from "../lib/mongo.js";
 
 function sanitizeUser(user) {
   return {
@@ -11,7 +22,7 @@ function sanitizeUser(user) {
   };
 }
 
-export function register(req, res) {
+export async function register(req, res) {
   const { name, email, password } = req.body || {};
 
   if (!name || !email || !password) {
@@ -21,8 +32,7 @@ export function register(req, res) {
   }
 
   const normalizedEmail = String(email).toLowerCase().trim();
-  const db = readDb();
-  const existingUser = db.users.find((user) => user.email === normalizedEmail);
+  const existingUser = await findUserByEmail(normalizedEmail);
 
   if (existingUser) {
     return res.status(409).json({ message: "Email is already in use." });
@@ -44,11 +54,8 @@ export function register(req, res) {
     createdAt: new Date().toISOString(),
   };
 
-  updateDb((current) => {
-    current.users.push(newUser);
-    current.sessions.push(session);
-    return current;
-  });
+  await createUser(newUser);
+  await createSession(session);
 
   return res.status(201).json({
     message: "Registration successful.",
@@ -57,28 +64,26 @@ export function register(req, res) {
   });
 }
 
-export function login(req, res) {
+export async function login(req, res) {
   const { email, password } = req.body || {};
   if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required." });
+    return res
+      .status(400)
+      .json({ message: "Email and password are required." });
   }
 
   const normalizedEmail = String(email).toLowerCase().trim();
-  const db = readDb();
-  const user = db.users.find((item) => item.email === normalizedEmail);
+  const user = await findUserByEmail(normalizedEmail);
 
   if (!user || !verifyPassword(password, user.passwordHash)) {
     return res.status(401).json({ message: "Invalid email or password." });
   }
 
   const token = createToken();
-  updateDb((current) => {
-    current.sessions.push({
-      token,
-      userId: user.id,
-      createdAt: new Date().toISOString(),
-    });
-    return current;
+  await createSession({
+    token,
+    userId: user.id,
+    createdAt: new Date().toISOString(),
   });
 
   return res.json({
@@ -88,17 +93,36 @@ export function login(req, res) {
   });
 }
 
-export function me(req, res) {
-  const db = readDb();
-  const user = db.users.find((item) => item.id === req.user.id);
+export async function me(req, res) {
+  const user = await getUserById(req.user.id);
   return res.json({ user: sanitizeUser(user) });
 }
 
-export function logout(req, res) {
-  updateDb((current) => {
-    current.sessions = current.sessions.filter((item) => item.token !== req.token);
-    return current;
-  });
-
+export async function logout(req, res) {
+  await deleteSessionByToken(req.token);
   return res.json({ message: "Logged out successfully." });
+}
+
+export function adminCheck(req, res) {
+  const { email } = req.body || {};
+  const normalizedEmail = String(email).toLowerCase().trim();
+
+  const adminEmails = (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.toLowerCase().trim())
+    .filter(Boolean);
+
+  if (!adminEmails.includes(normalizedEmail)) {
+    return res.status(403).json({
+      message: "This account does not have admin access.",
+    });
+  }
+
+  return res.json({
+    message: "Admin access verified.",
+    user: {
+      email: normalizedEmail,
+      role: "admin",
+    },
+  });
 }
