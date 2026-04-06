@@ -23,6 +23,7 @@ export default function AccountOrdersPage() {
   const { user } = useUser();
   const [searchParams] = useSearchParams();
   const recentOrderId = searchParams.get("recent");
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,6 +51,7 @@ export default function AccountOrdersPage() {
     fetchOrders();
   }, [auth]);
 
+  // 🔒 Clerk not configured
   if (!clerkEnabled) {
     return (
       <Container className="py-12 md:py-16">
@@ -66,12 +68,7 @@ export default function AccountOrdersPage() {
     );
   }
 
-  const auth = useAuth();
-  const { user } = useUser();
-  const [searchParams] = useSearchParams();
-  const recentOrderId = searchParams.get("recent");
-  const { purchases } = usePurchaseData(user?.id);
-
+  // 🔐 Not signed in
   if (!auth.isSignedIn) {
     return (
       <Container className="py-12 md:py-16">
@@ -110,100 +107,74 @@ export default function AccountOrdersPage() {
             <p className="text-sm font-medium uppercase tracking-[0.24em] text-indigo-600">
               My Orders
             </p>
+
             <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h1 className="text-4xl font-semibold tracking-tight text-slate-950">
+                <h1 className="text-4xl font-semibold text-slate-950">
                   Track your purchases
                 </h1>
                 <p className="mt-2 text-slate-600">
-                  Every checkout made while signed in appears here for easy
-                  review.
+                  Every checkout made while signed in appears here.
                 </p>
               </div>
+
               <Link
                 to="/"
-                className="inline-flex rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-indigo-200 hover:text-indigo-700"
+                className="inline-flex rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-indigo-200 hover:text-indigo-700"
               >
                 Continue shopping
               </Link>
             </div>
 
+            {/* 🔄 Loading */}
             {loading ? (
-              <div className="mt-8 rounded-[24px] border border-slate-200 bg-white p-8 text-center shadow-sm">
+              <div className="mt-8 p-8 text-center">
                 <p className="text-lg font-semibold text-slate-950">
                   Loading your orders...
                 </p>
               </div>
             ) : !orders.length ? (
-              <div className="mt-8 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
-                  <Package size={24} />
-                </div>
-                <h2 className="mt-4 text-2xl font-semibold text-slate-950">
-                  No tracked purchases yet
-                </h2>
-                <p className="mx-auto mt-3 max-w-xl text-slate-600">
-                  Complete a checkout while signed in and your order history
-                  will start appearing here automatically.
-                </p>
-                <Link
-                  to="/shop"
-                  className="mt-6 inline-flex rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white"
-                >
-                  Browse products
-                </Link>
+              /* 📦 Empty */
+              <div className="mt-8 p-8 text-center">
+                <Package className="mx-auto text-indigo-600" size={30} />
+                <h2 className="mt-4 text-2xl font-semibold">No orders yet</h2>
               </div>
             ) : (
+              /* ✅ Orders list */
               <div className="mt-8 space-y-4">
-                {purchases.map((purchase) => (
+                {orders.map((order) => (
                   <div
-                    key={purchase.id}
-                    className={`rounded-[24px] border p-5 shadow-sm transition ${
-                      purchase.id === recentOrderId
-                        ? "border-indigo-200 bg-indigo-50/40"
-                        : "border-slate-200 bg-white"
+                    key={order.id}
+                    className={`rounded-[24px] border p-5 ${
+                      order.id === recentOrderId
+                        ? "border-indigo-200 bg-indigo-50"
+                        : "border-slate-200"
                     }`}
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex justify-between">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                          Order ID
-                        </p>
-                        <p className="mt-2 text-lg font-semibold text-slate-950">
-                          {purchase.id}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          Placed {new Date(purchase.placedAt).toLocaleString()}
-                        </p>
+                        <p className="text-sm text-slate-500">Order ID</p>
+                        <p className="font-semibold">{order.id}</p>
                       </div>
 
                       <div className="text-right">
-                        <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                          {purchase.status}
-                        </span>
-                        <p className="mt-3 text-2xl font-semibold text-slate-950">
-                          {formatPrice(purchase.total)}
+                        <p className="font-semibold">
+                          {formatPrice(order.total)}
                         </p>
+                        <p className="text-sm text-slate-500">{order.status}</p>
                       </div>
                     </div>
 
-                    <div className="mt-5 grid gap-3">
-                      {purchase.items.map((item) => (
+                    <div className="mt-4 space-y-2">
+                      {order.items.map((item) => (
                         <div
-                          key={`${purchase.id}-${item.slug}`}
-                          className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                          key={item.slug}
+                          className="flex justify-between text-sm"
                         >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-slate-950">
-                              {item.name}
-                            </p>
-                            <p className="mt-1 text-sm text-slate-500">
-                              {item.brand} · Qty {item.quantity}
-                            </p>
-                          </div>
-                          <p className="shrink-0 text-sm font-semibold text-slate-950">
-                            {formatPrice(item.price * item.quantity)}
-                          </p>
+                          <span>
+                            {item.name} × {item.quantity}
+                          </span>
+                          <span>{formatPrice(item.price * item.quantity)}</span>
                         </div>
                       ))}
                     </div>
@@ -214,28 +185,22 @@ export default function AccountOrdersPage() {
           </div>
         </div>
 
-        <div className="space-y-4 lg:sticky lg:top-28 lg:self-start">
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-slate-950">
-              Account details
-            </h2>
-            <p className="mt-4 text-sm text-slate-500">Signed in as</p>
-            <p className="mt-1 text-lg font-semibold text-slate-950">
-              {user?.fullName || user?.firstName || "Fast Tech customer"}
-            </p>
-            <p className="mt-1 text-sm text-slate-600">
+        {/* Sidebar */}
+        <div className="space-y-4">
+          <div className="p-6 border rounded-[32px] bg-white">
+            <h2 className="text-xl font-semibold">Account</h2>
+            <p className="mt-2">{user?.fullName}</p>
+            <p className="text-sm text-slate-500">
               {user?.primaryEmailAddress?.emailAddress}
             </p>
           </div>
 
-          <div className="rounded-[32px] border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
-            <div className="flex items-center gap-3">
-              <Truck size={18} className="text-indigo-600" />
-              Track recent checkouts in one place
+          <div className="p-6 border rounded-[32px] bg-slate-50 text-sm">
+            <div className="flex items-center gap-2">
+              <Truck size={16} /> Track orders
             </div>
-            <div className="mt-3 flex items-center gap-3">
-              <ShieldCheck size={18} className="text-indigo-600" />
-              Purchases stay tied to your account
+            <div className="flex items-center gap-2 mt-2">
+              <ShieldCheck size={16} /> Secure purchases
             </div>
           </div>
         </div>
