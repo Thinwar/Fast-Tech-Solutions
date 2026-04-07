@@ -89,7 +89,7 @@ export async function login(req, res) {
 export async function me(req, res) {
   const user = await getUserById(req.user.id);
   return res.json({ user: sanitizeUser(user) });
-}
+} 
 
 export async function logout(req, res) {
   return res.json({ message: "Logged out successfully." });
