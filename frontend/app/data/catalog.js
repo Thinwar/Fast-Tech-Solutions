@@ -12,7 +12,7 @@ export const defaultCatalogData = {
     supportEmail: "support@fasttechsolutions.co.ke",
     supportPhone: "+254 700 000 000",
     location: "Kimathi Street, Nairobi CBD",
-    whatsappPhone: "254700000000",
+    whatsappPhone: "254721997879",
   },
   categories: [
     {
